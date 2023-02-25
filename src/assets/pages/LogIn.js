@@ -203,7 +203,7 @@ function Login() {
                   : ""
               }
             />
-            {signInFormik.errors.email && signUpFormik.touched.email && (
+            {signInFormik.errors.email && signInFormik.touched.email && (
               <p className="error">{signInFormik.errors.email}</p>
             )}
             <Input
