@@ -196,7 +196,11 @@ function Card({ id, key, bgColor, data, time }) {
         </DialogContent>
         <DialogActions>
           <Button
-            style={{ backgroundColor: "#d0312d", borderRadius: "5px" }}
+            style={{
+              backgroundColor: "#d0312d",
+              borderRadius: "5px",
+              color: "black",
+            }}
             onClick={() => {
               deleteWeather.mutate(id);
               handleClose();
@@ -218,6 +222,7 @@ function Card({ id, key, bgColor, data, time }) {
             style={{
               backgroundColor: "#3cb043",
               borderRadius: "5px",
+              color: "black",
             }}
             onClick={handleClose}
           >
