@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import back from "../images/back.png";
 import arrow from "../images/arrow.png";
 import Header from "../components/Header";
+import { monthDict } from "../utils/utils";
 
 function ViewWeather() {
   const [visibleItemCount, setVisibleItemCount] = useState(4); // initially show 3 items
@@ -21,166 +22,142 @@ function ViewWeather() {
     navigate(-1); // This will navigate back to the previous page in the history
   }
 
-  const monthDict = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sept",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const getDate = () => {
-    let date = new Date();
-    let hour = date.getHours() >= 12 ? date.getHours() - 12 : date.getHours();
-    let mm =
-      date.getMinutes() >= 10 ? date.getMinutes() : "0" + date.getMinutes();
-    let am_pm = date.getHours() >= 12 ? "pm" : "am";
-    let day = date.getDate();
-    let month = monthDict[date.getMonth()];
-
-    return hour + "." + mm + am_pm + ", " + month + " " + day;
-  };
-
-  console.log(props);
-
   return (
-    <Container>
+    <Container key={props.key}>
       <Header />
-      <Primary style={{ backgroundColor: props.bgColor }}>
-        <BackIcon>
-          <img
-            src={back}
-            onClick={handleBack}
-            style={{ width: "20px", cursor: "pointer" }}
-            alt={"back-icon"}
-          />
-          <ButtonGroup>
-            {visibleItemCount < 8 && (
-              <button onClick={handleViewMoreClick}>View More</button>
-            )}
-            {visibleItemCount === 8 && (
-              <button onClick={() => setVisibleItemCount(4)}>View Less</button>
-            )}
-          </ButtonGroup>
-        </BackIcon>
-        <div>
-          <h2>{props.data.timezone}</h2>
-          <p>{getDate()}</p>
-        </div>
-        <Temperature>
-          <LeftDesc>
-            <div
-              style={{
-                marginRight: "20px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <img
-                alt="weather-icon"
-                src={`http://openweathermap.org/img/w/${props.data.current.weather[0].icon}.png`}
-                style={{
-                  margin: 8,
-                }}
-              />
-              <p>{props.data.current.weather[0].main}</p>
-            </div>
-          </LeftDesc>
-          <RightDesc>
-            <div
-              style={{
-                marginLeft: "20px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <h1>{props.data.current.temp}°c</h1>
-              <p>Temp Min: {props.data.daily[0].temp.min}°c</p>
-              <p>Temp Max: {props.data.daily[0].temp.max}°c</p>
-            </div>
-          </RightDesc>
-        </Temperature>
-      </Primary>
-      <InterMediary style={{ backgroundColor: props.bgColor }}>
-        {props.data.daily.slice(0, visibleItemCount).map(
-          (data, index) =>
-            index > 0 && (
+      <Wrap>
+        <Primary style={{ backgroundColor: props.bgColor }}>
+          <BackIcon>
+            <img
+              src={back}
+              onClick={handleBack}
+              style={{ width: "20px", cursor: "pointer" }}
+              alt={"back-icon"}
+            />
+            <ButtonGroup>
+              {visibleItemCount < 8 && (
+                <button onClick={handleViewMoreClick}>View More</button>
+              )}
+              {visibleItemCount === 8 && (
+                <button onClick={() => setVisibleItemCount(4)}>
+                  View Less
+                </button>
+              )}
+            </ButtonGroup>
+          </BackIcon>
+          <div>
+            <h2>{props.data.timezone}</h2>
+            <p>{props.time}</p>
+          </div>
+          <Temperature>
+            <LeftDesc>
               <div
                 style={{
-                  background: "#000",
-                  borderRadius: "12px",
+                  marginRight: "20px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  margin: "8px",
-                  minWidth: "80px",
                 }}
               >
-                <p style={{ margin: 0, fontSize: "12px" }}>
-                  {new Date(data.dt * 1000).getDate()}{" "}
-                  {monthDict[new Date(data.dt * 1000).getMonth()]}
-                </p>
                 <img
-                  style={{ width: "40px" }}
                   alt="weather-icon"
-                  src={`http://openweathermap.org/img/w/${data.weather[0].icon}.png`}
+                  src={`http://openweathermap.org/img/w/${props.data.current.weather[0].icon}.png`}
+                  style={{
+                    margin: 8,
+                  }}
                 />
-                <p style={{ margin: 0, fontSize: "12px" }}>
-                  {Math.round(data.temp.min)}°c ~ {Math.round(data.temp.max)}°c
-                </p>
+                <p>{props.data.current.weather[0].main}</p>
               </div>
-            )
-        )}
-      </InterMediary>
-      <Secondary>
-        <div>
-          <p>
-            <b>Pressure:</b> {props.data.current.pressure}hPa
-          </p>
-          <p>
-            <b>Humidity:</b> {props.data.current.humidity}%
-          </p>
-          <p>
-            <b>Visibility:</b> {props.data.current.visibility / 1000}km
-          </p>
-        </div>
-        <div>
-          <img
-            src={arrow}
-            alt={"wind-dir-arrow"}
-            style={{
-              width: 24,
-              transform: `rotate(${props.data.current.wind_deg}deg)`,
-            }}
-          />
-          <h5>
-            {props.data.current.wind_speed}m/s {props.data.current.wind_deg}{" "}
-            Degree
-          </h5>
-        </div>
-        <div>
-          <p>
-            <b>Sunrise:</b>{" "}
-            {new Date(props.data.current.sunrise * 1000).toLocaleTimeString()}
-          </p>
-          <p>
-            <b>Sunset:</b>{" "}
-            {new Date(props.data.current.sunset * 1000).toLocaleTimeString()}
-          </p>
-        </div>
-      </Secondary>
+            </LeftDesc>
+            <RightDesc>
+              <div
+                style={{
+                  marginLeft: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <h1>{props.data.current.temp}°c</h1>
+                <p>Temp Min: {props.data.daily[0].temp.min}°c</p>
+                <p>Temp Max: {props.data.daily[0].temp.max}°c</p>
+              </div>
+            </RightDesc>
+          </Temperature>
+        </Primary>
+        <InterMediary style={{ backgroundColor: props.bgColor }}>
+          {props.data.daily.slice(0, visibleItemCount).map(
+            (data, index) =>
+              index > 0 && (
+                <div
+                  style={{
+                    background: "#000",
+                    borderRadius: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "8px",
+                    minWidth: "80px",
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: "12px" }}>
+                    {new Date(data.dt * 1000).getDate()}{" "}
+                    {monthDict[new Date(data.dt * 1000).getMonth()]}
+                  </p>
+                  <img
+                    style={{ width: "40px" }}
+                    alt="weather-icon"
+                    src={`http://openweathermap.org/img/w/${data.weather[0].icon}.png`}
+                  />
+                  <p style={{ margin: 0, fontSize: "12px" }}>
+                    {Math.round(data.temp.min)}°c ~ {Math.round(data.temp.max)}
+                    °c
+                  </p>
+                </div>
+              )
+          )}
+        </InterMediary>
+        <Secondary>
+          <div>
+            <p>
+              <b>Pressure:</b> {props.data.current.pressure}hPa
+            </p>
+            <p>
+              <b>Humidity:</b> {props.data.current.humidity}%
+            </p>
+            <p>
+              <b>Visibility:</b> {props.data.current.visibility / 1000}km
+            </p>
+          </div>
+          <div>
+            <img
+              src={arrow}
+              alt={"wind-dir-arrow"}
+              style={{
+                width: 24,
+                transform: `rotate(${props.data.current.wind_deg}deg)`,
+              }}
+            />
+            <h5>
+              {props.data.current.wind_speed}m/s {props.data.current.wind_deg}{" "}
+              Degree
+            </h5>
+          </div>
+          <div>
+            <p>
+              <b>Sunrise:</b>{" "}
+              {new Date(props.data.current.sunrise * 1000).toLocaleTimeString()}
+            </p>
+            <p>
+              <b>Sunset:</b>{" "}
+              {new Date(props.data.current.sunset * 1000).toLocaleTimeString()}
+            </p>
+          </div>
+        </Secondary>
+      </Wrap>
     </Container>
   );
 }
@@ -190,13 +167,17 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: center;
   margin: 0 auto;
-  max-width: 960px;
-  min-width: 700px;
-  min-height: calc(80vh);
+  max-height: calc(100vh - 60px);
 
   @media (max-width: 960px) {
     margin: 0 10px;
   }
+`;
+
+const Wrap = styled.div`
+  margin: 0 auto;
+  min-width: 700px;
+  max-width: 960px;
 `;
 
 const Primary = styled.div`

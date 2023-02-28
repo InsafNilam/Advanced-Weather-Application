@@ -40,17 +40,6 @@ function Login() {
       }, 1000);
     } catch (err) {
       if (err && err instanceof AxiosError) {
-        toast.error(err.response.request.statusText, {
-          position: "top-center",
-          autoClose: 1000,
-          hideProgressBar: true,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: false,
-          progress: undefined,
-        });
-      } else if (err && err instanceof Error) {
-        console.log(err);
         toast.error(err.message, {
           position: "top-center",
           autoClose: 1000,
@@ -60,8 +49,17 @@ function Login() {
           draggable: false,
           progress: undefined,
         });
+      } else if (err && err instanceof Error) {
+        toast.error(err, {
+          position: "top-center",
+          autoClose: 1000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+        });
       }
-      console.log(err);
     }
   };
 
@@ -81,16 +79,6 @@ function Login() {
       actions.resetForm();
     } catch (err) {
       if (err && err instanceof AxiosError) {
-        toast.error(err.response.data.message, {
-          position: "top-center",
-          autoClose: 1000,
-          hideProgressBar: true,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: false,
-          progress: undefined,
-        });
-      } else if (err && err instanceof Error) {
         toast.error(err.message, {
           position: "top-center",
           autoClose: 1000,
@@ -100,8 +88,17 @@ function Login() {
           draggable: false,
           progress: undefined,
         });
+      } else if (err && err instanceof Error) {
+        toast.error(err, {
+          position: "top-center",
+          autoClose: 1000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+        });
       }
-      console.log(err);
     }
   };
 

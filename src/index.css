@@ -13,11 +13,11 @@ body {
 }
 
 .input-error{
-  border-color: #fc8181;
+  border: 1px solid #fc8181;
 }
 
 .error{
-  margin:0;
+  margin:5px 0;
   font-size: 11px;
   color: #b22222;
   align-self: start;

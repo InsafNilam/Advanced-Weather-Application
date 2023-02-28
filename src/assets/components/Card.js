@@ -1,137 +1,128 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
 import cloud from "../images/cloud.png";
 import arrow from "../images/arrow.png";
 import close from "../images/close.png";
+import { authAxios } from "../utils/weatherAPI";
 
-function Card(props) {
+function Card({ id, key, bgColor, data, time }) {
   const navigate = useNavigate();
-  const getDate = () => {
-    let monthDict = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sept",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    let date = new Date();
-    let hour = date.getHours() >= 12 ? date.getHours() - 12 : date.getHours();
-    let mm =
-      date.getMinutes() >= 10 ? date.getMinutes() : "0" + date.getMinutes();
-    let am_pm = date.getHours() >= 12 ? "pm" : "am";
-    let day = date.getDate();
-    let month = monthDict[date.getMonth()];
+  const queryClient = useQueryClient();
 
-    return hour + "." + mm + am_pm + ", " + month + " " + day;
-  };
-
-  const [time, setTime] = useState(getDate);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTime(getDate);
-    }, 60000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
+  const deleteWeather = useMutation(
+    (id) => {
+      return authAxios.delete(`/api/weather/delete-weather/${id}`);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("weather");
+      },
+      onError: (error) => {
+        console.log("An error occurred:", error);
+      },
+    }
+  );
 
   return (
-    <Container
-      onClick={() =>
-        navigate("/weather-info", {
-          replace: false,
-          state: {
-            ...props,
-          },
-        })
-      }
-    >
-      <Primary style={{ backgroundColor: props.bgColor }}>
+    <Container style={{ backgroundColor: bgColor }} key={key}>
+      <div>
         <CloseIcon>
-          <img src={close} width={12} alt={"close-icon"} />
-        </CloseIcon>
-        <Temperature>
-          <div>
-            <h4>{props.data.timezone}</h4>
-            <h6>{time}</h6>
-          </div>
-          <div>
-            <h1>{props.data.current.temp}°c</h1>
-          </div>
-          <div
-            style={{
-              marginRight: "20px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <img
-              src={`http://openweathermap.org/img/w/${props.data.current.weather[0].icon}.png`}
-              style={{
-                margin: 8,
-              }}
-              alt="weather-icon"
-            />
-            <h5>{props.data.current.weather[0].main}</h5>
-          </div>
-          <div>
-            <h5>Temp Min: {props.data.daily[0].temp.min}°c</h5>
-            <h5>Temp Max {props.data.daily[0].temp.max}°c</h5>
-          </div>
-        </Temperature>
-        <Image>
-          <img src={cloud} width={"100%"} alt={"transparent-cloud-img"} />
-        </Image>
-      </Primary>
-      <Secondary>
-        <div>
-          <h5>Pressure: {props.data.current.pressure}hPa</h5>
-          <h5>Humidity: {props.data.current.humidity}%</h5>
-          <h5>Visibility: {props.data.current.visibility / 1000}km</h5>
-        </div>
-        <div>
           <img
-            src={arrow}
-            alt={"wind-dir-arrow"}
-            style={{
-              width: 24,
-              transform: `rotate(${props.data.current.wind_deg}deg)`,
-            }}
+            src={close}
+            style={{ width: 12 }}
+            alt={"close-icon"}
+            onClick={() => deleteWeather.mutate(id)}
           />
-          <h5>
-            {props.data.current.wind_speed}m/s {props.data.current.wind_deg}{" "}
-            Degree
-          </h5>
-        </div>
-        <div>
-          <h5>
-            Sunrise:{" "}
-            {new Date(props.data.current.sunrise * 1000).toLocaleTimeString()}
-          </h5>
-          <h5>
-            Sunset:{" "}
-            {new Date(props.data.current.sunset * 1000).toLocaleTimeString()}
-          </h5>
-        </div>
-      </Secondary>
+        </CloseIcon>
+      </div>
+      <div
+        onClick={() =>
+          navigate("/weather-info", {
+            state: {
+              data,
+              time,
+              bgColor,
+            },
+          })
+        }
+      >
+        <Primary>
+          <Temperature>
+            <div>
+              <h4>{data.timezone}</h4>
+              <h6>{time}</h6>
+            </div>
+            <div>
+              <h1>{data.current.temp}°c</h1>
+            </div>
+            <div
+              style={{
+                marginRight: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src={`http://openweathermap.org/img/w/${data.current.weather[0].icon}.png`}
+                style={{
+                  margin: 8,
+                }}
+                alt="weather-icon"
+              />
+              <h5>{data.current.weather[0].main}</h5>
+            </div>
+            <div>
+              <h5>Temp Min: {data.daily[0].temp.min}°c</h5>
+              <h5>Temp Max {data.daily[0].temp.max}°c</h5>
+            </div>
+          </Temperature>
+          <Image>
+            <img src={cloud} width={"100%"} alt={"transparent-cloud-img"} />
+          </Image>
+        </Primary>
+        <Secondary>
+          <div>
+            <h5>Pressure: {data.current.pressure}hPa</h5>
+            <h5>Humidity: {data.current.humidity}%</h5>
+            <h5>Visibility: {data.current.visibility / 1000}km</h5>
+          </div>
+          <div>
+            <img
+              src={arrow}
+              alt={"wind-dir-arrow"}
+              style={{
+                width: 24,
+                transform: `rotate(${data.current.wind_deg}deg)`,
+              }}
+            />
+            <h5>
+              {data.current.wind_speed}m/s {data.current.wind_deg} Degree
+            </h5>
+          </div>
+          <div>
+            <h5>
+              Sunrise:{" "}
+              {new Date(data.current.sunrise * 1000).toLocaleTimeString()}
+            </h5>
+            <h5>
+              Sunset:{" "}
+              {new Date(data.current.sunset * 1000).toLocaleTimeString()}
+            </h5>
+          </div>
+        </Secondary>
+      </div>
     </Container>
   );
 }
 
 const Container = styled.div`
   margin: 0 auto;
+  border-radius: 5px;
+  overflow: hidden;
   max-width: 450px;
   min-width: 400px;
   cursor: pointer;
@@ -140,20 +131,17 @@ const Container = styled.div`
 const Primary = styled.div`
   padding-bottom: 12px;
   position: relative;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
   color: white;
   text-align: center;
 `;
 
 const CloseIcon = styled.div`
   padding: 8px 12px 0;
+  z-index: 20;
   text-align: end;
 `;
 const Secondary = styled.div`
   padding: 12px 0px;
-  border-bottom-right-radius: 5px;
-  border-bottom-left-radius: 5px;
   text-align: center;
   align-items: center;
   display: grid;

@@ -1,11 +1,12 @@
-import React from "react";
-import { useQuery } from "react-query";
+import React, { useMemo, useState, useEffect } from "react";
+import { useQuery, useQueries, useMutation, useQueryClient } from "react-query";
 import { RingLoader } from "react-spinners";
 import styled from "styled-components";
 import axios, { AxiosError } from "axios";
-import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { basicSchema } from "../validator/schema";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,42 +14,26 @@ import "react-toastify/dist/ReactToastify.css";
 import Card from "../components/Card";
 import loadError from "../images/load_error.png";
 import Header from "../components/Header";
+import { getDate } from "../utils/utils";
+import { authAxios } from "../utils/weatherAPI";
 
 function Dashboard() {
-  const navigate = useNavigate();
+  const [time, setTime] = useState(getDate); // Handle Time
+  const [open, setOpen] = useState(false); // Handle BackDrop
+  const [data, setData] = useState(); // Handle User Weather Data
+  const queryClient = useQueryClient();
 
-  const getWeatherDetailsById = async () => {
-    const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/onecall?lat=6.927079&lon=79.861244&units=metric&exclude=hourly,minutely&appid=${process.env.REACT_APP_WEATHER_API}`
-    );
-    return response.data;
-  };
-
-  const { data, isLoading, isError, error } = useQuery(
-    "weather-data",
-    getWeatherDetailsById,
+  const addWeather = useMutation(
+    (weather) => {
+      return authAxios.post("/api/weather/add-weather", weather);
+    },
     {
-      cacheTime: 300000, // Cache for 5 minute
-      staleTime: 60000, // Stale for 1 minute
-    }
-  );
-
-  const onSubmit = async (values, actions) => {
-    try {
-      const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/onecall?lat=${values.latitude}&lon=${values.longitude}&units=metric&exclude=hourly,minutely&appid=${process.env.REACT_APP_WEATHER_API}`
-      );
-      navigate("/weather-info", {
-        replace: false,
-        state: {
-          bgColor: "#388ee7",
-          data: response.data,
-        },
-      });
-      actions.resetForm();
-    } catch (err) {
-      if (err && err instanceof AxiosError) {
-        toast.error(err.response.data.message, {
+      onMutate: () => {
+        setOpen(true);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries("weather");
+        toast.success("Weather Coordinates has been added", {
           position: "top-center",
           autoClose: 1000,
           hideProgressBar: true,
@@ -57,7 +42,68 @@ function Dashboard() {
           draggable: false,
           progress: undefined,
         });
-      } else if (err && err instanceof Error) {
+        setInterval(() => setOpen(false), 1000);
+      },
+      onError: (error) => {
+        toast.error(error, {
+          position: "top-center",
+          autoClose: 1000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+        });
+      },
+    }
+  );
+
+  const getWeatherDetails = async (lat, lon) => {
+    const response = await axios.get(
+      `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=metric&exclude=hourly,minutely&appid=${process.env.REACT_APP_WEATHER_API}`
+    );
+    return response.data;
+  };
+
+  const getUserWeatherData = async () => {
+    const response = await authAxios.get("/api/weather/get-weather");
+    setData(response.data);
+    return response.data;
+  };
+
+  const { data: weatherData } = useQuery("weather", getUserWeatherData);
+
+  const queryResults = useQueries(
+    Array.isArray(weatherData) && weatherData.length > 0
+      ? weatherData?.map((weather, i) => {
+          return {
+            queryKey: ["weather-data", i],
+            queryFn: () =>
+              getWeatherDetails(weather.latitude, weather.longitude),
+            cacheTime: 300000,
+            retry: 2,
+            retryDelay: 2000,
+            enabled: !!weatherData,
+          };
+        })
+      : []
+  );
+
+  const onSubmit = async (values, actions) => {
+    try {
+      const response = await getWeatherDetails(
+        values.latitude,
+        values.longitude
+      );
+      if (response) {
+        addWeather.mutate({
+          latitude: values.latitude,
+          longitude: values.longitude,
+        });
+      }
+      actions.resetForm();
+    } catch (err) {
+      if (err && err instanceof AxiosError) {
         toast.error(err.message, {
           position: "top-center",
           autoClose: 1000,
@@ -67,8 +113,17 @@ function Dashboard() {
           draggable: false,
           progress: undefined,
         });
+      } else if (err && err instanceof Error) {
+        toast.error(err, {
+          position: "top-center",
+          autoClose: 1000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+        });
       }
-      console.log(err);
     }
   };
 
@@ -78,8 +133,18 @@ function Dashboard() {
       longitude: "",
     },
     validationSchema: basicSchema,
-    onSubmit: onSubmit,
+    onSubmit,
   });
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTime(getDate);
+    }, 60000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
 
   return (
     <Container>
@@ -128,44 +193,69 @@ function Dashboard() {
         </InputGroup>
         <ButtonGroup>
           <button type="submit" disabled={formik.isSubmitting}>
-            Search City
+            Add City
           </button>
         </ButtonGroup>
       </Form>
       <Wrap>
-        {isLoading && (
-          <Loader>
-            <RingLoader color="#36d7b7" loading={isLoading} />
-            <p>Please wait while we fetch the Weather Data</p>
-          </Loader>
-        )}
-        {isError && (
-          <Loader>
-            <img
-              alt="error-icon"
-              src={loadError}
-              style={{
-                width: "40%",
-                height: "fit-content",
-                filter: "drop-shadow(0 0 0.75rem crimson)",
-                objectFit: "cover",
-              }}
-            />
-            <p>{error.message}</p>
-          </Loader>
-        )}
-        {!isLoading && !isError && (
-          <Card key={1} bgColor={"#388ee7"} data={data} />
-        )}
+        {useMemo(() => {
+          const color = ["#388ee7", "#6249cc", "#40b681", "#de944e", "#9c3a3a"];
+          return !queryResults.length
+            ? null
+            : queryResults.map((result, i) => {
+                if (result.isLoading) {
+                  return (
+                    <Loader>
+                      <RingLoader color="#36d7b7" loading={result.isLoading} />
+                      <p>Please wait while we fetch the Weather Data</p>
+                    </Loader>
+                  );
+                }
+
+                if (result.isError) {
+                  return (
+                    <Loader>
+                      <img
+                        alt="error-icon"
+                        src={loadError}
+                        style={{
+                          width: "40%",
+                          height: "fit-content",
+                          filter: "drop-shadow(0 0 0.75rem crimson)",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <p>{result.error.message}</p>
+                    </Loader>
+                  );
+                }
+
+                return (
+                  <Card
+                    time={time}
+                    id={data && data[i]._id}
+                    key={`card_key_${i}`}
+                    bgColor={color[i % color.length]}
+                    data={result.data}
+                  />
+                );
+              });
+        }, [queryResults, data, time])}
       </Wrap>
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={open}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Container>
   );
 }
 
 const Container = styled.main`
-  max-height: calc(80vh);
+  max-height: calc(100vh - 60px);
   margin: 0 auto;
-  padding: 0px calc(3.5vw + 5px) 0px;
+  overflow-x: scroll;
   align-items: center;
   justify-content: center;
 
@@ -193,15 +283,22 @@ const Loader = styled.div`
 `;
 
 const Wrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   margin: 0 auto;
   max-width: 960px;
-  min-width: 440px;
-  min-height: calc(80vh);
-  position: relative;
-  bottom: 60px;
+  overflow-x: scroll;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  grid-gap: 12px;
+  grid-row-gap: 20px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 980px) {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
 `;
 
 const ButtonGroup = styled.div`
