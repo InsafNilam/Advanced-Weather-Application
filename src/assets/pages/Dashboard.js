@@ -33,7 +33,7 @@ function Dashboard() {
       },
       onSuccess: () => {
         queryClient.invalidateQueries("weather");
-        toast.success("Weather Coordinates has been added", {
+        toast.success("Coordinates has been added", {
           position: "top-center",
           autoClose: 1000,
           hideProgressBar: true,
@@ -104,7 +104,7 @@ function Dashboard() {
       actions.resetForm();
     } catch (err) {
       if (err && err instanceof AxiosError) {
-        toast.error(err.message, {
+        toast.error(err.response.data, {
           position: "top-center",
           autoClose: 1000,
           hideProgressBar: true,
@@ -168,7 +168,7 @@ function Dashboard() {
           {formik.errors.latitude && formik.touched.latitude ? (
             <p className="error">{formik.errors.latitude}</p>
           ) : (
-            <p></p>
+            <p style={{ minHeight: "15px", margin: "5px 0" }}></p>
           )}
         </InputGroup>
         <InputGroup>
@@ -188,7 +188,7 @@ function Dashboard() {
           {formik.errors.longitude && formik.touched.longitude ? (
             <p className="error">{formik.errors.longitude}</p>
           ) : (
-            <p></p>
+            <p style={{ minHeight: "15px", margin: "5px 0" }}></p>
           )}
         </InputGroup>
         <ButtonGroup>
@@ -234,7 +234,7 @@ function Dashboard() {
                   <Card
                     time={time}
                     id={data && data[i]._id}
-                    key={`card_key_${i}`}
+                    key={i}
                     bgColor={color[i % color.length]}
                     data={result.data}
                   />

@@ -40,7 +40,7 @@ function Login() {
       }, 1000);
     } catch (err) {
       if (err && err instanceof AxiosError) {
-        toast.error(err.message, {
+        toast.error(err.response.data, {
           position: "top-center",
           autoClose: 1000,
           hideProgressBar: true,

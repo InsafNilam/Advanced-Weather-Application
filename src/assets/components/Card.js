@@ -1,14 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import cloud from "../images/cloud.png";
 import arrow from "../images/arrow.png";
 import close from "../images/close.png";
+import right from "../images/right.png";
+import wrong from "../images/wrong.png";
+import error from "../images/load_error.png";
 import { authAxios } from "../utils/weatherAPI";
 
 function Card({ id, key, bgColor, data, time }) {
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [canDelete, setCanDelete] = useState(true);
+  const [open, setOpen] = useState(false); // Handle BackDrop
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -17,25 +37,61 @@ function Card({ id, key, bgColor, data, time }) {
       return authAxios.delete(`/api/weather/delete-weather/${id}`);
     },
     {
+      onMutate: () => {
+        setOpen(true);
+      },
       onSuccess: () => {
         queryClient.invalidateQueries("weather");
+        toast.success("Coordinates has been deleted", {
+          position: "top-center",
+          autoClose: 1000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+        });
+        setInterval(() => setOpen(false), 1000);
       },
       onError: (error) => {
-        console.log("An error occurred:", error);
+        toast.error(error, {
+          position: "top-center",
+          autoClose: 1000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+        });
       },
     }
   );
 
+  const handleOpen = () => {
+    setAlertOpen(true);
+  };
+
+  const handleClose = () => {
+    setAlertOpen(false);
+  };
+
+  useEffect(() => {
+    if (data.timezone === "Asia/Colombo") setCanDelete(false);
+  }, [data.timezone]);
+
   return (
     <Container style={{ backgroundColor: bgColor }} key={key}>
+      <ToastContainer />
       <div>
         <CloseIcon>
-          <img
-            src={close}
-            style={{ width: 12 }}
-            alt={"close-icon"}
-            onClick={() => deleteWeather.mutate(id)}
-          />
+          {canDelete && (
+            <img
+              src={close}
+              style={{ width: 12 }}
+              alt={"close-icon"}
+              onClick={handleOpen}
+            />
+          )}
         </CloseIcon>
       </div>
       <div
@@ -115,6 +171,70 @@ function Card({ id, key, bgColor, data, time }) {
           </div>
         </Secondary>
       </div>
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={open}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+      <Dialog open={alertOpen} onClose={handleClose} aria-labelledby="outlined">
+        <DialogTitle
+          id="alert-dialog-title"
+          style={{
+            display: "flex",
+            justifyContent: "space-evenly",
+            alignItems: "center",
+          }}
+        >
+          <img src={error} width={60} alt="error-icon" />
+          Are you sure?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            You won't be able to revert this!
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            style={{ backgroundColor: "#d0312d", borderRadius: "5px" }}
+            onClick={() => {
+              deleteWeather.mutate(id);
+              handleClose();
+            }}
+          >
+            <img
+              src={wrong}
+              alt="incorrect-icon"
+              width={24}
+              style={{
+                width: "24px",
+                padding: "0 2px",
+                filter: "drop-shadow(0 0 0.75rem rgba(0,0,0,.5))",
+              }}
+            />
+            Yes, delete it!
+          </Button>
+          <Button
+            style={{
+              backgroundColor: "#3cb043",
+              borderRadius: "5px",
+            }}
+            onClick={handleClose}
+          >
+            <img
+              src={right}
+              alt="right-icon"
+              width={24}
+              style={{
+                width: "24px",
+                padding: "0 2px",
+                filter: "drop-shadow(0 0 0.75rem rgba(0,0,0,.5))",
+              }}
+            />
+            No, cancel it!
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
@@ -137,6 +257,7 @@ const Primary = styled.div`
 
 const CloseIcon = styled.div`
   padding: 8px 12px 0;
+  min-height: 30px;
   z-index: 20;
   text-align: end;
 `;
