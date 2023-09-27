@@ -25,7 +25,7 @@ import wrong from "../images/wrong.png";
 import error from "../images/load_error.png";
 import { authAxios } from "../utils/weatherAPI";
 
-function Card({ id, key, bgColor, data, time }) {
+function Card({ id, bgColor, data, time }) {
   const [alertOpen, setAlertOpen] = useState(false);
   const [canDelete, setCanDelete] = useState(true);
   const [open, setOpen] = useState(false); // Handle BackDrop
@@ -80,7 +80,7 @@ function Card({ id, key, bgColor, data, time }) {
   }, [data.timezone]);
 
   return (
-    <Container style={{ backgroundColor: bgColor }} key={key}>
+    <Container style={{ backgroundColor: bgColor }}>
       <ToastContainer />
       <div>
         <CloseIcon>
@@ -199,7 +199,7 @@ function Card({ id, key, bgColor, data, time }) {
             style={{
               backgroundColor: "#d0312d",
               borderRadius: "5px",
-              color: "black",
+              color: "wheat",
             }}
             onClick={() => {
               deleteWeather.mutate(id);
@@ -222,7 +222,7 @@ function Card({ id, key, bgColor, data, time }) {
             style={{
               backgroundColor: "#3cb043",
               borderRadius: "5px",
-              color: "black",
+              color: "wheat",
             }}
             onClick={handleClose}
           >

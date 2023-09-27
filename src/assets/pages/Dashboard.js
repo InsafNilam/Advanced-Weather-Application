@@ -5,8 +5,17 @@ import styled from "styled-components";
 import axios, { AxiosError } from "axios";
 import { useFormik } from "formik";
 import { basicSchema } from "../validator/schema";
+import { useSignOut } from "react-auth-kit";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,13 +24,31 @@ import Card from "../components/Card";
 import loadError from "../images/load_error.png";
 import Header from "../components/Header";
 import { getDate } from "../utils/utils";
-import { authAxios } from "../utils/weatherAPI";
+import { authAxios, checkValidity } from "../utils/weatherAPI";
+
+import jwtExpiry from "../images/jwt_expiry.png";
+import error from "../images/load_error.png";
 
 function Dashboard() {
+  const [expiryOpen, setExpiry] = useState(false);
+  const signOut = useSignOut();
+
+  const handleExpiryOpen = () => {
+    setExpiry(true);
+  };
+  const handleExpiryClose = () => {
+    setExpiry(false);
+    signOut();
+    window.location.pathname = "/";
+  };
+
   const [time, setTime] = useState(getDate); // Handle Time
   const [open, setOpen] = useState(false); // Handle BackDrop
   const [data, setData] = useState(); // Handle User Weather Data
   const queryClient = useQueryClient();
+
+  const validity = checkValidity();
+  const expirationTime = validity.exp * 1000 - 60000;
 
   const addWeather = useMutation(
     (weather) => {
@@ -81,8 +108,6 @@ function Dashboard() {
             queryFn: () =>
               getWeatherDetails(weather.latitude, weather.longitude),
             cacheTime: 300000,
-            retry: 2,
-            retryDelay: 2000,
             enabled: !!weatherData,
           };
         })
@@ -145,6 +170,10 @@ function Dashboard() {
       clearInterval(intervalId);
     };
   }, []);
+
+  if (Date.now() >= expirationTime) {
+    handleExpiryOpen();
+  }
 
   return (
     <Container>
@@ -234,7 +263,7 @@ function Dashboard() {
                   <Card
                     time={time}
                     id={data && data[i]._id}
-                    key={i}
+                    key={data ? data[i]._id : i.toString()}
                     bgColor={color[i % color.length]}
                     data={result.data}
                   />
@@ -248,6 +277,41 @@ function Dashboard() {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
+      <Dialog
+        open={expiryOpen}
+        onClose={handleExpiryClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle
+          id="alert-dialog-title"
+          style={{
+            display: "flex",
+            justifyContent: "space-evenly",
+            alignItems: "center",
+          }}
+        >
+          <img src={error} width={60} alt="error-icon" />
+          JWT EXPIRY ERROR
+        </DialogTitle>
+        <DialogContent>
+          <img src={jwtExpiry} width={500} alt="jwt-error-icon" />
+          <DialogContentText
+            id="alert-dialog-description"
+            style={{
+              textAlign: "center",
+              margin: "10px",
+              color: "#d0312d",
+              fontSize: "30px",
+            }}
+          >
+            JWT TOKEN INVALID
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleExpiryClose}>OK</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

@@ -1,10 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
+import { useSignOut } from "react-auth-kit";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
+
+import { checkValidity } from "../utils/weatherAPI";
 
 import Error from "../images/error.png";
+import jwtExpiry from "../images/jwt_expiry.png";
+import error from "../images/load_error.png";
 
 function PageNotFound() {
+  const [expiryOpen, setExpiry] = useState(false);
+  const signOut = useSignOut();
+
+  const validity = checkValidity();
+  const expirationTime = validity.exp * 1000 - 60000;
+
+  const handleExpiryOpen = () => {
+    setExpiry(true);
+  };
+  const handleExpiryClose = () => {
+    setExpiry(false);
+    signOut();
+    window.location.pathname = "/";
+  };
+
+  if (Date.now() >= expirationTime) {
+    handleExpiryOpen();
+  }
+
   return (
     <Container>
       <Content>
@@ -16,10 +48,45 @@ function PageNotFound() {
         <span>changed or is temporarily unavailable.</span>
       </Content>
       <ButtonGroup>
-        <Link to="/">
+        <Link to="/home">
           <button>Dashboard</button>
         </Link>
       </ButtonGroup>
+      <Dialog
+        open={expiryOpen}
+        onClose={handleExpiryClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle
+          id="alert-dialog-title"
+          style={{
+            display: "flex",
+            justifyContent: "space-evenly",
+            alignItems: "center",
+          }}
+        >
+          <img src={error} width={60} alt="error-icon" />
+          JWT EXPIRY ERROR
+        </DialogTitle>
+        <DialogContent>
+          <img src={jwtExpiry} width={500} alt="jwt-error-icon" />
+          <DialogContentText
+            id="alert-dialog-description"
+            style={{
+              textAlign: "center",
+              margin: "10px",
+              color: "#d0312d",
+              fontSize: "30px",
+            }}
+          >
+            JWT TOKEN INVALID
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleExpiryClose}>OK</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
