@@ -12,66 +12,10 @@ function Login() {
   const [logIn, toggle] = useState(true);
   const signIn = useSignIn();
 
-  const loginWithFacebook = async () => {
-    // Redirect the user to Facebook's login page
-    // Replace with your Facebook App's information
-    const facebookAppId = "966422771088681";
-    const redirectUri = "https://weatherforcast360.netlify.app/home";
-    const scope = "email"; // The scope of permissions you need
-    const facebookLoginUrl = `https://www.facebook.com/v13.0/dialog/oauth?client_id=${facebookAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=token`;
-
-    window.location.href = facebookLoginUrl;
-  };
-
-  const handleFacebookLoginRedirection = async () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const facebookAccessToken = urlParams.get("access_token");
-
-  console.log("Access", facebookAccessToken, urlParams);
-
-  if (facebookAccessToken) {
-    try {
-      // Send the Facebook access token to your server for verification
-      const response = await axios.post(
-        "YOUR_SERVER_ENDPOINT_FOR_FACEBOOK_LOGIN",
-        { facebookAccessToken }
-      );
-
-      // If the server verifies the Facebook login, sign in the user
-      signIn({
-        token: response.data.token,
-        expiresIn: 3600,
-        tokenType: "Bearer",
-        authState: { /* User information from your server */ },
-      });
-
-      toast.success("Successfully Logged In", {
-        position: "top-center",
-        autoClose: 1000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: false,
-        progress: undefined,
-      });
-
-      // Redirect to "/home" after a short delay
-      setTimeout(() => {
-        window.location.pathname = "/home";
-      }, 1000);
-    } catch (err) {
-      // Handle any errors that may occur during the process
-      // ...
-    }
-  }
-};
-
-handleFacebookLoginRedirection();
-
   const onSignInSubmit = async (values, actions) => {
     try {
       const response = await axios.post(
-        "https://lucky-teal-duck.cyclic.app/api/user/signin",
+        "api/user/signin",
         values
       );
       signIn({
@@ -239,7 +183,7 @@ handleFacebookLoginRedirection();
                   Sign Up
                 </Button>
               </div>
-              <div onClick={loginWithFacebook}>
+              <div>
                 <Facebook/>
               </div>
             </div>
