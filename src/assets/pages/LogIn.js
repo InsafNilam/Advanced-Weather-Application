@@ -27,7 +27,7 @@ function Login() {
   const urlParams = new URLSearchParams(window.location.search);
   const facebookAccessToken = urlParams.get("access_token");
 
-  console.log("Access", facebookAccessToken);
+  console.log("Access", facebookAccessToken, urlParams);
 
   if (facebookAccessToken) {
     try {
