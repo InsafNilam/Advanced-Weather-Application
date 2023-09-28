@@ -11,7 +11,7 @@ export default function Facebook() {
 
   const onSignIn = async ( params, email )  => {
     try {
-      const response = await axios.post("api/user/signin", params);
+      const response = await axios.post("https://lucky-teal-duck.cyclic.app/api/user/signin", params);
       signIn({
         token: response.data.token,
         expiresIn: 3600,
@@ -38,7 +38,7 @@ export default function Facebook() {
 
   const onSignUp = async ( params, email )  => {
     try {
-      await axios.post("api/user/signup", params);
+      await axios.post("https://lucky-teal-duck.cyclic.app/api/user/signup", params);
       onSignIn(params, email);
     } catch (err) {
       onSignIn(params, email);

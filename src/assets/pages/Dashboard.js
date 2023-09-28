@@ -52,7 +52,7 @@ function Dashboard() {
 
   const addWeather = useMutation(
     (weather) => {
-      return authAxios.post("/api/weather/add-weather", weather);
+      return authAxios.post("https://lucky-teal-duck.cyclic.app/api/weather/add-weather", weather);
     },
     {
       onMutate: () => {
@@ -93,7 +93,7 @@ function Dashboard() {
   };
 
   const getUserWeatherData = async () => {
-    const response = await authAxios.get("/api/weather/get-weather");
+    const response = await authAxios.get("https://lucky-teal-duck.cyclic.app/api/weather/get-weather");
     setData(response.data);
     return response.data;
   };

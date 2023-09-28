@@ -15,7 +15,7 @@ function Login() {
   const onSignInSubmit = async (values, actions) => {
     try {
       const response = await axios.post(
-        "api/user/signin",
+        "https://lucky-teal-duck.cyclic.app/api/user/signin",
         values
       );
       signIn({
@@ -64,7 +64,7 @@ function Login() {
 
   const onSignUpSubmit = async (values, actions) => {
     try {
-      await axios.post("api/user/signup", values);
+      await axios.post("https://lucky-teal-duck.cyclic.app/api/user/signup", values);
       toast.success("Successfully Registered", {
         position: "top-center",
         autoClose: 1000,
